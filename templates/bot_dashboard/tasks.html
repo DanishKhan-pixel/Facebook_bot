@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-tasks"></i> Tasks</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'bot_dashboard:create_task' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Task
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list"></i> All Tasks</h5>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Task Name</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Created IDs</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in page_obj %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'bot_dashboard:task_detail' task.id %}" class="text-decoration-none">
+                                    {{ task.name }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ task.status }}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress" style="width: 100px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ task.progress }}%" 
+                                         aria-valuenow="{{ task.progress }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ task.progress }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ task.created_ids_count }}/{{ task.total_ids_to_create }}</td>
+                            <td>{{ task.created_at|timesince }} ago</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'bot_dashboard:task_detail' task.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if task.status == 'running' %}
+                                        <button class="btn btn-sm btn-warning stop-task" data-task-id="{{ task.id }}">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                    {% elif task.status in 'pending,stopped,failed' %}
+                                        <button class="btn btn-sm btn-success start-task" data-task-id="{{ task.id }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if task.created_ids_count > 0 %}
+                                        <a href="{% url 'bot_dashboard:download_ids' task.id %}" 
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Tasks Found</h5>
+                <p class="text-muted">You haven't created any tasks yet.</p>
+                <a href="{% url 'bot_dashboard:create_task' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Your First Task
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,53 @@
+# Django Settings
+SECRET_KEY=django-insecure-your-secret-key-here-change-this-in-production
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database (SQLite by default)
+DATABASE_URL=sqlite:///db.sqlite3
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379/0
+
+# Celery Configuration
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# TempMail API (for temporary email generation)
+TEMP_MAIL_API_KEY=your-tempmail-api-key-here
+
+# ADB Configuration
+ADB_PATH=/usr/local/bin/adb
+
+# MEmu Configuration
+MEMU_PATH=/path/to/memu/console.exe
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=logs/facebook_bot.log
+
+# Security
+SESSION_COOKIE_AGE=3600
+CSRF_COOKIE_SECURE=False
+SESSION_COOKIE_SECURE=False
+
+# File Uploads
+MAX_UPLOAD_SIZE=10485760  # 10MB
+
+# Email Configuration (for notifications)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+
+# WebSocket Configuration
+CHANNEL_LAYERS_BACKEND=channels.layers.InMemoryChannelLayer
+
+# Production Settings (set to False in development)
+SECURE_SSL_REDIRECT=False
+SECURE_BROWSER_XSS_FILTER=False
+SECURE_CONTENT_TYPE_NOSNIFF=False
+SECURE_HSTS_SECONDS=0
+SECURE_HSTS_INCLUDE_SUBDOMAINS=False
+SECURE_HSTS_PRELOAD=False 
