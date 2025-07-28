@@ -25,7 +25,7 @@ from task_engine.tasks import start_bot_task, stop_bot_task
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('bot_dashboard:dashboard')
     
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -40,7 +40,7 @@ def login_view(request):
                     message=f'User {username} logged in successfully',
                     user=user
                 )
-                return redirect('dashboard')
+                return redirect('bot_dashboard:dashboard')
             else:
                 messages.error(request, 'Invalid username or password.')
     else:
@@ -49,15 +49,17 @@ def login_view(request):
     return render(request, 'bot_dashboard/login.html', {'form': form})
 
 
+@login_required
 def logout_view(request):
-    if request.user.is_authenticated:
-        SystemLog.objects.create(
-            level='info',
-            message=f'User {request.user.username} logged out',
-            user=request.user
-        )
+    # Log the logout action
+    ActivityLog.objects.create(
+        task=None,
+        level='info',
+        message=f'User {request.user.username} logged out',
+        user=request.user
+    )
     logout(request)
-    return redirect('login')
+    return redirect('bot_dashboard:login')
 
 
 @login_required
@@ -113,7 +115,7 @@ def settings_view(request):
             setting.created_by = request.user
             setting.save()
             messages.success(request, 'Settings saved successfully!')
-            return redirect('settings')
+            return redirect('bot_dashboard:settings')
     else:
         form = BotSettingsForm()
     
@@ -182,7 +184,7 @@ def create_task(request):
                 task.save()
             
             messages.success(request, 'Task created and started successfully!')
-            return redirect('task_detail', task_id=task.id)
+            return redirect('bot_dashboard:task_detail', task_id=task.id)
     else:
         form = BotTaskForm()
     
