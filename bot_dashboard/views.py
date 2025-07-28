@@ -6,14 +6,18 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     UserProfile, BotSettings, BotTask, CreatedFacebookID, 
@@ -28,25 +32,55 @@ def login_view(request):
         return redirect('bot_dashboard:dashboard')
     
     if request.method == 'POST':
-        form = LoginForm(request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                SystemLog.objects.create(
+                # Log the login action
+                ActivityLog.objects.create(
+                    task=None,
                     level='info',
                     message=f'User {username} logged in successfully',
                     user=user
                 )
-                return redirect('bot_dashboard:dashboard')
+                next_url = request.GET.get('next', 'bot_dashboard:dashboard')
+                return redirect(next_url)
             else:
                 messages.error(request, 'Invalid username or password.')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = LoginForm()
     
     return render(request, 'bot_dashboard/login.html', {'form': form})
+
+
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect('bot_dashboard:dashboard')
+    
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Log the registration
+            ActivityLog.objects.create(
+                task=None,
+                level='info',
+                message=f'New user {user.username} registered successfully',
+                user=user
+            )
+            messages.success(request, 'Account created successfully! Please log in.')
+            return redirect('bot_dashboard:login')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserCreationForm()
+    
+    return render(request, 'bot_dashboard/signup.html', {'form': form})
 
 
 @login_required

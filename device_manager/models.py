@@ -18,6 +18,12 @@ class Device(models.Model):
         ('error', 'Error'),
     ]
 
+    CONNECTION_TYPES = [
+        ('usb', 'USB'),
+        ('wifi', 'WiFi'),
+        ('bluetooth', 'Bluetooth'),
+    ]
+
     name = models.CharField(max_length=200)
     device_type = models.CharField(max_length=20, choices=DEVICE_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline')
@@ -28,6 +34,10 @@ class Device(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     port = models.IntegerField(default=5555)
     is_active = models.BooleanField(default=True)
+    is_emulator = models.BooleanField(default=False)
+    connection_type = models.CharField(max_length=20, choices=CONNECTION_TYPES, default='usb')
+    connection_details = models.TextField(blank=True)
+    is_connected = models.BooleanField(default=False)
     last_seen = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -94,12 +104,20 @@ class DeviceLog(models.Model):
 
 class EmulatorProfile(models.Model):
     name = models.CharField(max_length=200)
-    emulator_path = models.CharField(max_length=500)
-    android_version = models.CharField(max_length=50)
-    screen_resolution = models.CharField(max_length=50)
-    ram_size = models.CharField(max_length=20)
+    platform = models.CharField(max_length=20, choices=[
+        ('android', 'Android'),
+        ('ios', 'iOS')
+    ], default='android')
+    device_model = models.CharField(max_length=100, blank=True)
+    resolution = models.CharField(max_length=50, blank=True)
+    api_level = models.IntegerField(null=True, blank=True)
+    android_version = models.CharField(max_length=50, blank=True)
+    ios_version = models.CharField(max_length=50, blank=True)
+    emulator_path = models.CharField(max_length=500, blank=True)
+    ram_size = models.CharField(max_length=20, blank=True)
     cpu_count = models.IntegerField(default=2)
     is_active = models.BooleanField(default=True)
+    is_running = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

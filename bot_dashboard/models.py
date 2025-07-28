@@ -103,11 +103,12 @@ class ActivityLog(models.Model):
         ('success', 'Success'),
     ]
 
-    task = models.ForeignKey(BotTask, on_delete=models.CASCADE, related_name='logs')
+    task = models.ForeignKey(BotTask, on_delete=models.CASCADE, related_name='logs', null=True, blank=True)
     level = models.CharField(max_length=20, choices=LOG_LEVELS, default='info')
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     device_name = models.CharField(max_length=200, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         ordering = ['-timestamp']

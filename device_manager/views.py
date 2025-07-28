@@ -96,7 +96,7 @@ def add_device(request):
             )
             
             messages.success(request, 'Device added successfully!')
-            return redirect('device_detail', device_id=device.id)
+            return redirect('device_manager:device_detail', device_id=device.id)
     else:
         form = DeviceForm()
     

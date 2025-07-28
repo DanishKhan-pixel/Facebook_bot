@@ -6,93 +6,106 @@ class DeviceForm(forms.ModelForm):
     class Meta:
         model = Device
         fields = [
-            'name', 'device_type', 'device_id', 'platform', 'version',
-            'screen_resolution', 'ip_address', 'port', 'notes'
+            'name', 'device_type', 'platform', 'connection_type', 
+            'connection_details', 'is_emulator', 'is_active'
         ]
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Device Name'
+                'placeholder': 'Device Name',
+                'required': True
             }),
             'device_type': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'device_id': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'ADB Device ID'
+                'required': True
             }),
-            'platform': forms.TextInput(attrs={
+            'platform': forms.Select(choices=[
+                ('android', 'Android'),
+                ('ios', 'iOS'),
+                ('desktop', 'Desktop')
+            ], attrs={
                 'class': 'form-control',
-                'placeholder': 'Android'
+                'required': True
             }),
-            'version': forms.TextInput(attrs={
+            'connection_type': forms.Select(attrs={
                 'class': 'form-control',
-                'placeholder': 'Android Version'
+                'required': True
             }),
-            'screen_resolution': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '1080x1920'
-            }),
-            'ip_address': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '192.168.1.100'
-            }),
-            'port': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 1,
-                'max': 65535
-            }),
-            'notes': forms.Textarea(attrs={
+            'connection_details': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Additional notes about this device'
+                'placeholder': 'IP address, port, or other connection information'
+            }),
+            'is_emulator': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             }),
         }
 
     def clean_device_id(self):
-        device_id = self.cleaned_data['device_id']
+        device_id = self.cleaned_data.get('device_id')
         if not device_id:
-            raise forms.ValidationError('Device ID is required')
+            # Generate a device ID if not provided
+            import uuid
+            device_id = f"device_{uuid.uuid4().hex[:8]}"
         return device_id
+
+    def save(self, commit=True):
+        device = super().save(commit=False)
+        if not device.device_id:
+            import uuid
+            device.device_id = f"device_{uuid.uuid4().hex[:8]}"
+        if commit:
+            device.save()
+        return device
 
 
 class EmulatorProfileForm(forms.ModelForm):
     class Meta:
         model = EmulatorProfile
         fields = [
-            'name', 'emulator_path', 'android_version', 'screen_resolution',
-            'ram_size', 'cpu_count'
+            'name', 'platform', 'device_model', 'resolution', 
+            'api_level', 'android_version', 'ios_version'
         ]
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Profile Name'
             }),
-            'emulator_path': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '/path/to/memu/console.exe'
+            'platform': forms.Select(choices=[
+                ('android', 'Android'),
+                ('ios', 'iOS')
+            ], attrs={
+                'class': 'form-control'
             }),
-            'android_version': forms.TextInput(attrs={
+            'device_model': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '7.1'
+                'placeholder': 'Device Model'
             }),
-            'screen_resolution': forms.TextInput(attrs={
+            'resolution': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '1080x1920'
             }),
-            'ram_size': forms.TextInput(attrs={
+            'api_level': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': '2048MB'
+                'min': 16,
+                'max': 34
             }),
-            'cpu_count': forms.NumberInput(attrs={
+            'android_version': forms.TextInput(attrs={
                 'class': 'form-control',
-                'min': 1,
-                'max': 8
+                'placeholder': '11.0'
+            }),
+            'ios_version': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '15.0'
             }),
         }
 
-    def clean_emulator_path(self):
-        emulator_path = self.cleaned_data['emulator_path']
-        if not emulator_path:
-            raise forms.ValidationError('Emulator path is required')
-        return emulator_path 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make platform-dependent fields optional
+        self.fields['api_level'].required = False
+        self.fields['android_version'].required = False
+        self.fields['ios_version'].required = False 
