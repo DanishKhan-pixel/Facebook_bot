@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Task Detail - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tasks"></i> Task: {{ task.name }}</h2>
+                <div>
+                    <a href="{% url 'bot_dashboard:tasks' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Tasks
+                    </a>
+                    <a href="{% url 'bot_dashboard:download_ids' task_id=task.id %}" class="btn btn-success">
+                        <i class="fas fa-download"></i> Download IDs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Task Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Task Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'running' %}primary{% elif task.status == 'failed' %}danger{% else %}secondary{% endif %}">
+                                            {{ task.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Progress:</strong></td>
+                                    <td>{{ task.progress }}%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created IDs:</strong></td>
+                                    <td>{{ task.created_ids_count }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Failed:</strong></td>
+                                    <td>{{ task.failed_count }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Target:</strong></td>
+                                    <td>{{ task.total_ids_to_create }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ task.created_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Started:</strong></td>
+                                    <td>{{ task.started_at|date:"M d, Y H:i"|default:"Not started" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Completed:</strong></td>
+                                    <td>{{ task.completed_at|date:"M d, Y H:i"|default:"Not completed" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Duration:</strong></td>
+                                    <td>{{ task.duration|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Settings:</strong></td>
+                                    <td>{{ task.settings.name|default:"No settings" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Task Controls -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-play-circle"></i> Task Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        {% if task.status in 'pending,stopped,failed' %}
+                        <button class="btn btn-success" onclick="startTask({{ task.id }})">
+                            <i class="fas fa-play"></i> Start Task
+                        </button>
+                        {% endif %}
+                        
+                        {% if task.status == 'running' %}
+                        <button class="btn btn-warning" onclick="stopTask({{ task.id }})">
+                            <i class="fas fa-stop"></i> Stop Task
+                        </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-info" onclick="refreshStatus({{ task.id }})">
+                            <i class="fas fa-sync"></i> Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Created Facebook IDs -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Created Facebook IDs ({{ created_ids.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if created_ids %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Password</th>
+                                    <th>Domain</th>
+                                    <th>Device</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fb_id in created_ids %}
+                                <tr>
+                                    <td>{{ fb_id.email }}</td>
+                                    <td>{{ fb_id.password }}</td>
+                                    <td>{{ fb_id.domain }}</td>
+                                    <td>{{ fb_id.device_name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if fb_id.status == 'created' %}success{% elif fb_id.status == 'failed' %}danger{% else %}warning{% endif %}">
+                                            {{ fb_id.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ fb_id.created_at|date:"M d, H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No IDs Created Yet</h5>
+                        <p class="text-muted">Facebook IDs will appear here once the task starts creating them.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Logs -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list-alt"></i> Task Logs</h5>
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                    <div class="task-logs" style="max-height: 400px; overflow-y: auto;">
+                        {% for log in logs %}
+                        <div class="log-entry mb-2 p-2 border-start border-3 border-{% if log.level == 'error' %}danger{% elif log.level == 'warning' %}warning{% else %}info{% endif %}">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ log.timestamp|date:"H:i:s" }}</small>
+                                <span class="badge bg-{% if log.level == 'error' %}danger{% elif log.level == 'warning' %}warning{% else %}info{% endif %}">
+                                    {{ log.level|upper }}
+                                </span>
+                            </div>
+                            <div class="mt-1">{{ log.message }}</div>
+                            {% if log.device_name %}
+                            <small class="text-muted">Device: {{ log.device_name }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-list-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Logs Yet</h5>
+                        <p class="text-muted">Task logs will appear here once the task starts running.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function startTask(taskId) {
+    if (confirm('Are you sure you want to start this task?')) {
+        $.post(`/tasks/${taskId}/start/`, {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+        .done(function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert('Failed to start task. Please try again.');
+        });
+    }
+}
+
+function stopTask(taskId) {
+    if (confirm('Are you sure you want to stop this task?')) {
+        $.post(`/tasks/${taskId}/stop/`, {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+        .done(function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert('Failed to stop task. Please try again.');
+        });
+    }
+}
+
+function refreshStatus(taskId) {
+    $.get(`/api/tasks/${taskId}/status/`)
+    .done(function(data) {
+        location.reload();
+    })
+    .fail(function() {
+        alert('Failed to refresh status. Please try again.');
+    });
+}
+
+// Auto-refresh if task is running
+{% if task.status == 'running' %}
+setInterval(function() {
+    refreshStatus({{ task.id }});
+}, 5000); // Refresh every 5 seconds
+{% endif %}
+</script>
+{% endblock %} 

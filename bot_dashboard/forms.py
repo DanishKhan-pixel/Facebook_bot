@@ -73,7 +73,7 @@ class BotSettingsForm(forms.ModelForm):
 class BotTaskForm(forms.ModelForm):
     class Meta:
         model = BotTask
-        fields = ['name', 'settings', 'total_ids_to_create']
+        fields = ['name', 'settings', 'total_ids_to_create', 'status']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -85,8 +85,11 @@ class BotTaskForm(forms.ModelForm):
             'total_ids_to_create': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 1,
-                'max': 100,
+                'max': 1000,
                 'placeholder': 'Number of IDs to create'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
             }),
         }
 

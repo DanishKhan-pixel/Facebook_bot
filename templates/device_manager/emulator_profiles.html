@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Emulator Profiles - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-desktop"></i> Emulator Profiles</h2>
+                <div>
+                    <button class="btn btn-success me-2" onclick="scanEmulators()">
+                        <i class="fas fa-search"></i> Scan Emulators
+                    </button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProfileModal">
+                        <i class="fas fa-plus"></i> Add Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Android Emulators -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fab fa-android"></i> Android Emulators</h5>
+                </div>
+                <div class="card-body">
+                    {% if android_profiles %}
+                    <div class="list-group">
+                        {% for profile in android_profiles %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ profile.name }}</h6>
+                                    <small class="text-muted">{{ profile.device_model }} - {{ profile.resolution }}</small>
+                                    <br>
+                                    <small class="text-muted">API {{ profile.api_level }} - {{ profile.android_version }}</small>
+                                </div>
+                                <div>
+                                    {% if profile.is_running %}
+                                    <span class="badge bg-success me-2">Running</span>
+                                    <button class="btn btn-sm btn-warning" onclick="stopEmulator('{{ profile.id }}')">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-secondary me-2">Stopped</span>
+                                    <button class="btn btn-sm btn-success" onclick="startEmulator('{{ profile.id }}')">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fab fa-android fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Android Emulators</h5>
+                        <p class="text-muted">No Android emulator profiles found.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProfileModal">
+                            <i class="fas fa-plus"></i> Add Android Profile
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- iOS Simulators -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fab fa-apple"></i> iOS Simulators</h5>
+                </div>
+                <div class="card-body">
+                    {% if ios_profiles %}
+                    <div class="list-group">
+                        {% for profile in ios_profiles %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ profile.name }}</h6>
+                                    <small class="text-muted">{{ profile.device_model }} - {{ profile.resolution }}</small>
+                                    <br>
+                                    <small class="text-muted">iOS {{ profile.ios_version }}</small>
+                                </div>
+                                <div>
+                                    {% if profile.is_running %}
+                                    <span class="badge bg-success me-2">Running</span>
+                                    <button class="btn btn-sm btn-warning" onclick="stopEmulator('{{ profile.id }}')">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-secondary me-2">Stopped</span>
+                                    <button class="btn btn-sm btn-success" onclick="startEmulator('{{ profile.id }}')">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fab fa-apple fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No iOS Simulators</h5>
+                        <p class="text-muted">No iOS simulator profiles found.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProfileModal">
+                            <i class="fas fa-plus"></i> Add iOS Profile
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start Templates -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-rocket"></i> Quick Start Templates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-android fa-2x text-primary mb-2"></i>
+                                    <h6>Android 11</h6>
+                                    <p class="small text-muted">Pixel 4, API 30</p>
+                                    <button class="btn btn-sm btn-primary" onclick="createQuickProfile('android-11')">
+                                        <i class="fas fa-plus"></i> Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-android fa-2x text-primary mb-2"></i>
+                                    <h6>Android 10</h6>
+                                    <p class="small text-muted">Pixel 3, API 29</p>
+                                    <button class="btn btn-sm btn-primary" onclick="createQuickProfile('android-10')">
+                                        <i class="fas fa-plus"></i> Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-apple fa-2x text-secondary mb-2"></i>
+                                    <h6>iOS 15</h6>
+                                    <p class="small text-muted">iPhone 13</p>
+                                    <button class="btn btn-sm btn-primary" onclick="createQuickProfile('ios-15')">
+                                        <i class="fas fa-plus"></i> Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-apple fa-2x text-secondary mb-2"></i>
+                                    <h6>iOS 14</h6>
+                                    <p class="small text-muted">iPhone 12</p>
+                                    <button class="btn btn-sm btn-primary" onclick="createQuickProfile('ios-14')">
+                                        <i class="fas fa-plus"></i> Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Profile Modal -->
+<div class="modal fade" id="addProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Add Emulator Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag"></i> Profile Name
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.platform.id_for_label }}" class="form-label">
+                                <i class="fas fa-mobile-alt"></i> Platform
+                            </label>
+                            {{ form.platform }}
+                            {% if form.platform.errors %}
+                                <div class="text-danger small">{{ form.platform.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.device_model.id_for_label }}" class="form-label">
+                                <i class="fas fa-mobile-alt"></i> Device Model
+                            </label>
+                            {{ form.device_model }}
+                            {% if form.device_model.errors %}
+                                <div class="text-danger small">{{ form.device_model.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.resolution.id_for_label }}" class="form-label">
+                                <i class="fas fa-expand"></i> Resolution
+                            </label>
+                            {{ form.resolution }}
+                            {% if form.resolution.errors %}
+                                <div class="text-danger small">{{ form.resolution.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.api_level.id_for_label }}" class="form-label">
+                                <i class="fas fa-code"></i> API Level (Android)
+                            </label>
+                            {{ form.api_level }}
+                            {% if form.api_level.errors %}
+                                <div class="text-danger small">{{ form.api_level.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.android_version.id_for_label }}" class="form-label">
+                                <i class="fab fa-android"></i> Android Version
+                            </label>
+                            {{ form.android_version }}
+                            {% if form.android_version.errors %}
+                                <div class="text-danger small">{{ form.android_version.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.ios_version.id_for_label }}" class="form-label">
+                            <i class="fab fa-apple"></i> iOS Version
+                        </label>
+                        {{ form.ios_version }}
+                        {% if form.ios_version.errors %}
+                            <div class="text-danger small">{{ form.ios_version.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function scanEmulators() {
+    $.post('{% url "device_manager:scan_devices" %}', {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to scan emulators. Please try again.');
+    });
+}
+
+function startEmulator(profileId) {
+    $.post(`/devices/emulators/${profileId}/start/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to start emulator. Please try again.');
+    });
+}
+
+function stopEmulator(profileId) {
+    if (confirm('Are you sure you want to stop this emulator?')) {
+        $.post(`/devices/emulators/${profileId}/stop/`, {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+        .done(function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert('Failed to stop emulator. Please try again.');
+        });
+    }
+}
+
+function createQuickProfile(template) {
+    // Pre-fill the form based on template
+    const modal = $('#addProfileModal');
+    const form = modal.find('form');
+    
+    // Set template-specific values
+    if (template === 'android-11') {
+        form.find('#id_name').val('Android 11 - Pixel 4');
+        form.find('#id_platform').val('android');
+        form.find('#id_device_model').val('Pixel 4');
+        form.find('#id_resolution').val('1080x2340');
+        form.find('#id_api_level').val('30');
+        form.find('#id_android_version').val('11.0');
+    } else if (template === 'android-10') {
+        form.find('#id_name').val('Android 10 - Pixel 3');
+        form.find('#id_platform').val('android');
+        form.find('#id_device_model').val('Pixel 3');
+        form.find('#id_resolution').val('1080x2160');
+        form.find('#id_api_level').val('29');
+        form.find('#id_android_version').val('10.0');
+    } else if (template === 'ios-15') {
+        form.find('#id_name').val('iOS 15 - iPhone 13');
+        form.find('#id_platform').val('ios');
+        form.find('#id_device_model').val('iPhone 13');
+        form.find('#id_resolution').val('1170x2532');
+        form.find('#id_ios_version').val('15.0');
+    } else if (template === 'ios-14') {
+        form.find('#id_name').val('iOS 14 - iPhone 12');
+        form.find('#id_platform').val('ios');
+        form.find('#id_device_model').val('iPhone 12');
+        form.find('#id_resolution').val('1170x2532');
+        form.find('#id_ios_version').val('14.5');
+    }
+    
+    modal.modal('show');
+}
+
+// Auto-refresh emulator status every 30 seconds
+setInterval(function() {
+    // Only refresh if there are emulator profiles
+    if (document.querySelectorAll('.list-group-item').length > 0) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %} 

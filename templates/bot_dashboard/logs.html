@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-list-alt"></i> Activity Logs</h2>
+                <div>
+                    <button class="btn btn-outline-secondary" onclick="exportLogs()">
+                        <i class="fas fa-download"></i> Export Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search_query }}" placeholder="Search in messages...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="level" class="form-label">Log Level</label>
+                            <select class="form-select" id="level" name="level">
+                                <option value="">All Levels</option>
+                                <option value="info" {% if level_filter == 'info' %}selected{% endif %}>Info</option>
+                                <option value="warning" {% if level_filter == 'warning' %}selected{% endif %}>Warning</option>
+                                <option value="error" {% if level_filter == 'error' %}selected{% endif %}>Error</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Filter
+                                </button>
+                                <a href="{% url 'bot_dashboard:logs' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-table"></i> Activity Logs ({{ page_obj.paginator.count }} total)</h5>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Level</th>
+                                    <th>Task</th>
+                                    <th>Device</th>
+                                    <th>Message</th>
+                                    <th>User</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in page_obj %}
+                                <tr>
+                                    <td>
+                                        <small>{{ log.timestamp|date:"M d, Y H:i:s" }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if log.level == 'error' %}danger{% elif log.level == 'warning' %}warning{% else %}info{% endif %}">
+                                            {{ log.level|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if log.task %}
+                                        <a href="{% url 'bot_dashboard:task_detail' task_id=log.task.id %}" class="text-decoration-none">
+                                            {{ log.task.name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.device_name %}
+                                        <span class="badge bg-secondary">{{ log.device_name }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="log-message" style="max-width: 300px;">
+                                            {{ log.message }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if log.user %}
+                                        <small class="text-muted">{{ log.user.username }}</small>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Logs pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-list-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Logs Found</h5>
+                        <p class="text-muted">
+                            {% if search_query or level_filter %}
+                            No logs match your current filters. Try adjusting your search criteria.
+                            {% else %}
+                            Activity logs will appear here once you start creating tasks.
+                            {% endif %}
+                        </p>
+                        {% if search_query or level_filter %}
+                        <a href="{% url 'bot_dashboard:logs' %}" class="btn btn-primary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportLogs() {
+    // Build the export URL with current filters
+    let exportUrl = '{% url "bot_dashboard:logs" %}?export=1';
+    
+    const searchQuery = document.getElementById('search').value;
+    const levelFilter = document.getElementById('level').value;
+    
+    if (searchQuery) {
+        exportUrl += '&search=' + encodeURIComponent(searchQuery);
+    }
+    
+    if (levelFilter) {
+        exportUrl += '&level=' + encodeURIComponent(levelFilter);
+    }
+    
+    // Create a temporary link to download the file
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'activity_logs.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Auto-refresh logs every 30 seconds if there are active tasks
+setInterval(function() {
+    // Check if there are any running tasks
+    $.get('{% url "api:dashboard_stats" %}', function(data) {
+        if (data.active_tasks > 0) {
+            // Reload the page to get fresh logs
+            location.reload();
+        }
+    });
+}, 30000);
+</script>
+{% endblock %} 

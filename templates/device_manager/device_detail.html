@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Device Detail - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-mobile-alt"></i> Device: {{ device.name }}</h2>
+                <div>
+                    <a href="{% url 'device_manager:device_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Devices
+                    </a>
+                    <button class="btn btn-info" onclick="checkDeviceStatus({{ device.id }})">
+                        <i class="fas fa-sync"></i> Check Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Device Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Device Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>{{ device.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>{{ device.device_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if device.is_connected %}success{% else %}danger{% endif %}">
+                                            {% if device.is_connected %}Connected{% else %}Disconnected{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Platform:</strong></td>
+                                    <td>{{ device.platform|default:"Unknown" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ device.created_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Seen:</strong></td>
+                                    <td>{{ device.last_seen|date:"M d, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Emulator:</strong></td>
+                                    <td>
+                                        {% if device.is_emulator %}
+                                        <span class="badge bg-info">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Active:</strong></td>
+                                    <td>
+                                        {% if device.is_active %}
+                                        <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Capabilities -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs"></i> Device Capabilities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Browser Support</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Chrome</li>
+                                <li><i class="fas fa-check text-success"></i> Firefox</li>
+                                <li><i class="fas fa-check text-success"></i> Safari</li>
+                                <li><i class="fas fa-check text-success"></i> Edge</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Automation Support</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Selenium WebDriver</li>
+                                <li><i class="fas fa-check text-success"></i> Appium</li>
+                                <li><i class="fas fa-check text-success"></i> Touch Actions</li>
+                                <li><i class="fas fa-check text-success"></i> Screenshot Capture</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if device_activity %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in device_activity %}
+                                <tr>
+                                    <td>{{ activity.timestamp|date:"M d, H:i:s" }}</td>
+                                    <td>{{ activity.action }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if activity.status == 'success' %}success{% elif activity.status == 'error' %}danger{% else %}warning{% endif %}">
+                                            {{ activity.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ activity.details|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Activity Yet</h5>
+                        <p class="text-muted">Device activity will appear here once you start using this device for tasks.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Controls -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-sliders-h"></i> Device Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if device.is_connected %}
+                        <button class="btn btn-success" onclick="connectDevice({{ device.id }})">
+                            <i class="fas fa-link"></i> Connect
+                        </button>
+                        {% else %}
+                        <button class="btn btn-warning" onclick="disconnectDevice({{ device.id }})">
+                            <i class="fas fa-unlink"></i> Disconnect
+                        </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-info" onclick="takeScreenshot({{ device.id }})">
+                            <i class="fas fa-camera"></i> Take Screenshot
+                        </button>
+                        
+                        <button class="btn btn-secondary" onclick="restartDevice({{ device.id }})">
+                            <i class="fas fa-redo"></i> Restart Device
+                        </button>
+                        
+                        {% if device.is_emulator %}
+                        <button class="btn btn-danger" onclick="stopEmulator({{ device.id }})">
+                            <i class="fas fa-stop"></i> Stop Emulator
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Statistics -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Device Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary mb-0">{{ tasks_count|default:0 }}</h4>
+                            <small class="text-muted">Tasks Completed</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0">{{ ids_created|default:0 }}</h4>
+                            <small class="text-muted">IDs Created</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-info mb-0">{{ uptime_hours|default:0 }}h</h4>
+                            <small class="text-muted">Uptime</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning mb-0">{{ success_rate|default:0 }}%</h4>
+                            <small class="text-muted">Success Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkDeviceStatus(deviceId) {
+    $.get(`/devices/${deviceId}/check/`)
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to check device status. Please try again.');
+    });
+}
+
+function connectDevice(deviceId) {
+    $.post(`/devices/${deviceId}/connect/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to connect device. Please try again.');
+    });
+}
+
+function disconnectDevice(deviceId) {
+    $.post(`/devices/${deviceId}/disconnect/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to disconnect device. Please try again.');
+    });
+}
+
+function takeScreenshot(deviceId) {
+    $.post(`/devices/${deviceId}/screenshot/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            // Open screenshot in new window
+            window.open(data.screenshot_url, '_blank');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to take screenshot. Please try again.');
+    });
+}
+
+function restartDevice(deviceId) {
+    if (confirm('Are you sure you want to restart this device?')) {
+        $.post(`/devices/${deviceId}/restart/`, {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+        .done(function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert('Failed to restart device. Please try again.');
+        });
+    }
+}
+
+function stopEmulator(deviceId) {
+    if (confirm('Are you sure you want to stop this emulator?')) {
+        $.post(`/devices/${deviceId}/stop/`, {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        })
+        .done(function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert('Failed to stop emulator. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %} 

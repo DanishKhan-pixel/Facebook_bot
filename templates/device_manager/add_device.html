@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Add Device - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus"></i> Add New Device</h2>
+                <a href="{% url 'device_manager:device_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Devices
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-mobile-alt"></i> Device Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag"></i> Device Name
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Give your device a descriptive name</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.device_type.id_for_label }}" class="form-label">
+                                    <i class="fas fa-mobile-alt"></i> Device Type
+                                </label>
+                                {{ form.device_type }}
+                                {% if form.device_type.errors %}
+                                    <div class="text-danger small">{{ form.device_type.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Select the type of device</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.platform.id_for_label }}" class="form-label">
+                                    <i class="fab fa-android"></i> Platform
+                                </label>
+                                {{ form.platform }}
+                                {% if form.platform.errors %}
+                                    <div class="text-danger small">{{ form.platform.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Operating system platform</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.connection_type.id_for_label }}" class="form-label">
+                                    <i class="fas fa-wifi"></i> Connection Type
+                                </label>
+                                {{ form.connection_type }}
+                                {% if form.connection_type.errors %}
+                                    <div class="text-danger small">{{ form.connection_type.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">How the device connects</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.connection_details.id_for_label }}" class="form-label">
+                                <i class="fas fa-info-circle"></i> Connection Details
+                            </label>
+                            {{ form.connection_details }}
+                            {% if form.connection_details.errors %}
+                                <div class="text-danger small">{{ form.connection_details.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">IP address, port, or other connection information</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_emulator }}
+                                    <label class="form-check-label" for="{{ form.is_emulator.id_for_label }}">
+                                        <i class="fas fa-desktop"></i> Is Emulator
+                                    </label>
+                                    {% if form.is_emulator.errors %}
+                                        <div class="text-danger small">{{ form.is_emulator.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        <i class="fas fa-check-circle"></i> Active Device
+                                    </label>
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'device_manager:device_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Device
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Device Setup Guide</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> Physical Devices:</h6>
+                        <ul class="mb-0">
+                            <li>Enable USB debugging on Android</li>
+                            <li>Enable developer mode on iOS</li>
+                            <li>Connect via USB or WiFi</li>
+                            <li>Install required drivers</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Emulators:</h6>
+                        <ul class="mb-0">
+                            <li>Android Studio AVD Manager</li>
+                            <li>Xcode iOS Simulator</li>
+                            <li>Genymotion for Android</li>
+                            <li>BlueStacks for Android</li>
+                        </ul>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6><i class="fas fa-chart-line"></i> Connection Types:</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 class="text-primary mb-0">USB</h4>
+                                    <small class="text-muted">Direct Connection</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-success mb-0">WiFi</h4>
+                                    <small class="text-muted">Network Connection</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation
+    $('form').on('submit', function() {
+        var isValid = true;
+        
+        // Check required fields
+        $('input[required], select[required], textarea[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        if (!isValid) {
+            alert('Please fill in all required fields.');
+            return false;
+        }
+
+        // Show loading state
+        $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+    });
+
+    // Auto-format device name
+    $('#id_name').on('input', function() {
+        var value = $(this).val();
+        // Remove special characters and limit length
+        value = value.replace(/[^a-zA-Z0-9\s\-_]/g, '').substring(0, 50);
+        $(this).val(value);
+    });
+
+    // Auto-detect platform based on device type
+    $('#id_device_type').on('change', function() {
+        var deviceType = $(this).val();
+        var platformField = $('#id_platform');
+        
+        if (deviceType === 'android') {
+            platformField.val('android');
+        } else if (deviceType === 'ios') {
+            platformField.val('ios');
+        } else if (deviceType === 'desktop') {
+            platformField.val('desktop');
+        }
+    });
+});
+</script>
+{% endblock %} 

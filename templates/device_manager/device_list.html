@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Devices - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-mobile-alt"></i> Device Management</h2>
+                <div>
+                    <button class="btn btn-success me-2" onclick="scanDevices()">
+                        <i class="fas fa-search"></i> Scan Devices
+                    </button>
+                    <a href="{% url 'device_manager:add_device' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Device
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> Connected Devices</h5>
+                </div>
+                <div class="card-body">
+                    {% if devices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Device Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Last Seen</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in devices %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ device.name }}</strong>
+                                        {% if device.is_emulator %}
+                                        <span class="badge bg-info">Emulator</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ device.device_type }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if device.is_connected %}success{% else %}danger{% endif %}">
+                                            {% if device.is_connected %}Connected{% else %}Disconnected{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ device.last_seen|date:"M d, Y H:i"|default:"Never" }}</td>
+                                    <td>
+                                        <a href="{% url 'device_manager:device_detail' device_id=device.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-info" onclick="checkDeviceStatus({{ device.id }})">
+                                            <i class="fas fa-sync"></i> Check
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Devices Found</h5>
+                        <p class="text-muted">Connect your first device to start creating Facebook IDs.</p>
+                        <div class="mt-3">
+                            <button class="btn btn-success me-2" onclick="scanDevices()">
+                                <i class="fas fa-search"></i> Scan for Devices
+                            </button>
+                            <a href="{% url 'device_manager:add_device' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Device Manually
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emulator Profiles -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-desktop"></i> Emulator Profiles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Android Emulators</h6>
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Android 11 (API 30)</h6>
+                                            <small class="text-muted">Pixel 4, 1080x2340</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success" onclick="startEmulator('android-11')">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Android 10 (API 29)</h6>
+                                            <small class="text-muted">Pixel 3, 1080x2160</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success" onclick="startEmulator('android-10')">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>iOS Simulators</h6>
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">iOS 15.0</h6>
+                                            <small class="text-muted">iPhone 13, 1170x2532</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success" onclick="startEmulator('ios-15')">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">iOS 14.5</h6>
+                                            <small class="text-muted">iPhone 12, 1170x2532</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-success" onclick="startEmulator('ios-14')">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function scanDevices() {
+    $.post('{% url "device_manager:scan_devices" %}', {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to scan devices. Please try again.');
+    });
+}
+
+function checkDeviceStatus(deviceId) {
+    $.get(`/devices/${deviceId}/check/`)
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to check device status. Please try again.');
+    });
+}
+
+function startEmulator(profile) {
+    $.post(`/devices/emulators/${profile}/start/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+    })
+    .done(function(data) {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .fail(function() {
+        alert('Failed to start emulator. Please try again.');
+    });
+}
+
+// Auto-refresh device status every 30 seconds
+setInterval(function() {
+    // Only refresh if there are devices
+    if (document.querySelectorAll('table tbody tr').length > 0) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %} 

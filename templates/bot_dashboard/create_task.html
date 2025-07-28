@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task - Facebook ID Creator Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> Create New Task</h2>
+                <a href="{% url 'bot_dashboard:tasks' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Tasks
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-robot"></i> Task Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag"></i> Task Name
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Give your task a descriptive name</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.total_ids_to_create.id_for_label }}" class="form-label">
+                                    <i class="fas fa-hashtag"></i> Number of IDs to Create
+                                </label>
+                                {{ form.total_ids_to_create }}
+                                {% if form.total_ids_to_create.errors %}
+                                    <div class="text-danger small">{{ form.total_ids_to_create.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">How many Facebook IDs to create</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.settings.id_for_label }}" class="form-label">
+                                    <i class="fas fa-cog"></i> Bot Settings
+                                </label>
+                                {{ form.settings }}
+                                {% if form.settings.errors %}
+                                    <div class="text-danger small">{{ form.settings.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Select bot configuration settings</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    <i class="fas fa-play-circle"></i> Initial Status
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Choose whether to start immediately or later</div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'bot_dashboard:tasks' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Task Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> Tips for Creating Tasks:</h6>
+                        <ul class="mb-0">
+                            <li>Choose a descriptive name for easy identification</li>
+                            <li>Start with a small number of IDs for testing</li>
+                            <li>Ensure your device is properly configured</li>
+                            <li>Review your bot settings before starting</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Important Notes:</h6>
+                        <ul class="mb-0">
+                            <li>Tasks will use your selected device and settings</li>
+                            <li>You can pause and resume tasks at any time</li>
+                            <li>Created IDs will be available for download</li>
+                            <li>Monitor task progress in the dashboard</li>
+                        </ul>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6><i class="fas fa-chart-line"></i> Current Statistics:</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h4 class="text-primary mb-0" id="active-tasks-count">-</h4>
+                                        <small class="text-muted">Active Tasks</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-success mb-0" id="total-ids-created">-</h4>
+                                    <small class="text-muted">Total IDs Created</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Load current statistics
+    $.get('{% url "api:dashboard_stats" %}', function(data) {
+        $('#active-tasks-count').text(data.active_tasks);
+        $('#total-ids-created').text(data.total_ids_created);
+    });
+
+    // Form validation
+    $('form').on('submit', function() {
+        var isValid = true;
+        
+        // Check required fields
+        $('input[required], select[required], textarea[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        if (!isValid) {
+            alert('Please fill in all required fields.');
+            return false;
+        }
+
+        // Show loading state
+        $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+    });
+
+    // Auto-format task name
+    $('#id_name').on('input', function() {
+        var value = $(this).val();
+        // Remove special characters and limit length
+        value = value.replace(/[^a-zA-Z0-9\s\-_]/g, '').substring(0, 50);
+        $(this).val(value);
+    });
+
+    // Auto-format number of IDs
+    $('#id_total_ids_to_create').on('input', function() {
+        var value = $(this).val();
+        // Only allow numbers
+        value = value.replace(/[^0-9]/g, '');
+        // Limit to reasonable range
+        if (parseInt(value) > 1000) {
+            value = '1000';
+        }
+        $(this).val(value);
+    });
+});
+</script>
+{% endblock %} 
