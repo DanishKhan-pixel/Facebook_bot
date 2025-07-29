@@ -1,0 +1,87 @@
+{
+  "created_at": "2025-07-29T22:50:40.796923",
+  "total_accounts": 9,
+  "success_count": 9,
+  "failed_count": 0,
+  "accounts": [
+    {
+      "username": "34725995389933",
+      "password": "Password123!",
+      "email": "user8494@xcode.email",
+      "device": "MEmu1",
+      "timestamp": "2025-07-29T22:49:35.228547",
+      "status": "created"
+    },
+    {
+      "username": "80167349072614",
+      "password": "Password123!",
+      "email": "user7518@xcode.email",
+      "device": "MEmu1",
+      "timestamp": "2025-07-29T22:49:41.953282",
+      "status": "created"
+    },
+    {
+      "username": "28077166196800",
+      "password": "Password123!",
+      "email": "user3955@xcode.email",
+      "device": "MEmu1",
+      "timestamp": "2025-07-29T22:49:46.875235",
+      "status": "created"
+    },
+    {
+      "username": "81151869704065",
+      "password": "Password123!",
+      "email": "user6153@xcode.email",
+      "device": "MEmu2",
+      "timestamp": "2025-07-29T22:49:56.026163",
+      "status": "created"
+    },
+    {
+      "username": "37024064668104",
+      "password": "Password123!",
+      "email": "user7089@xcode.email",
+      "device": "MEmu2",
+      "timestamp": "2025-07-29T22:50:01.620347",
+      "status": "created"
+    },
+    {
+      "username": "12149917570037",
+      "password": "Password123!",
+      "email": "user1898@xcode.email",
+      "device": "MEmu2",
+      "timestamp": "2025-07-29T22:50:04.765439",
+      "status": "created"
+    },
+    {
+      "username": "39770716061148",
+      "password": "Password123!",
+      "email": "user4589@xcode.email",
+      "device": "MEmu3",
+      "timestamp": "2025-07-29T22:50:14.236211",
+      "status": "created"
+    },
+    {
+      "username": "62287315189565",
+      "password": "Password123!",
+      "email": "user9141@xcode.email",
+      "device": "MEmu3",
+      "timestamp": "2025-07-29T22:50:21.608221",
+      "status": "created"
+    },
+    {
+      "username": "54608114259812",
+      "password": "Password123!",
+      "email": "user7519@xcode.email",
+      "device": "MEmu4",
+      "timestamp": "2025-07-29T22:50:37.123170",
+      "status": "created"
+    }
+  ],
+  "instances_used": [
+    "MEmu1",
+    "MEmu2",
+    "MEmu3",
+    "MEmu4"
+  ],
+  "simulation_mode": true
+}

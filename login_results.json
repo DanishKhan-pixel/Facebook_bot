@@ -1,0 +1,118 @@
+{
+  "login_session": {
+    "started_at": "2025-07-29T23:18:36.288168",
+    "total_accounts": 9,
+    "successful_logins": 6,
+    "failed_logins": 3
+  },
+  "login_results": [
+    {
+      "account": {
+        "username": "34725995389933",
+        "password": "Password123!",
+        "email": "user8494@xcode.email",
+        "device": "MEmu1",
+        "timestamp": "2025-07-29T22:49:35.228547"
+      },
+      "instance": "MEmu1",
+      "success": true,
+      "timestamp": "2025-07-29T23:16:54.286856"
+    },
+    {
+      "account": {
+        "username": "80167349072614",
+        "password": "Password123!",
+        "email": "user7518@xcode.email",
+        "device": "MEmu1",
+        "timestamp": "2025-07-29T22:49:41.953282"
+      },
+      "instance": "MEmu1",
+      "success": false,
+      "timestamp": "2025-07-29T23:17:04.934086"
+    },
+    {
+      "account": {
+        "username": "28077166196800",
+        "password": "Password123!",
+        "email": "user3955@xcode.email",
+        "device": "MEmu1",
+        "timestamp": "2025-07-29T22:49:46.875235"
+      },
+      "instance": "MEmu1",
+      "success": true,
+      "timestamp": "2025-07-29T23:17:14.158518"
+    },
+    {
+      "account": {
+        "username": "81151869704065",
+        "password": "Password123!",
+        "email": "user6153@xcode.email",
+        "device": "MEmu2",
+        "timestamp": "2025-07-29T22:49:56.026163"
+      },
+      "instance": "MEmu2",
+      "success": false,
+      "timestamp": "2025-07-29T23:17:33.392960"
+    },
+    {
+      "account": {
+        "username": "37024064668104",
+        "password": "Password123!",
+        "email": "user7089@xcode.email",
+        "device": "MEmu2",
+        "timestamp": "2025-07-29T22:50:01.620347"
+      },
+      "instance": "MEmu2",
+      "success": true,
+      "timestamp": "2025-07-29T23:17:41.933053"
+    },
+    {
+      "account": {
+        "username": "12149917570037",
+        "password": "Password123!",
+        "email": "user1898@xcode.email",
+        "device": "MEmu2",
+        "timestamp": "2025-07-29T22:50:04.765439"
+      },
+      "instance": "MEmu3",
+      "success": true,
+      "timestamp": "2025-07-29T23:17:56.353734"
+    },
+    {
+      "account": {
+        "username": "39770716061148",
+        "password": "Password123!",
+        "email": "user4589@xcode.email",
+        "device": "MEmu3",
+        "timestamp": "2025-07-29T22:50:14.236211"
+      },
+      "instance": "MEmu3",
+      "success": true,
+      "timestamp": "2025-07-29T23:18:05.566472"
+    },
+    {
+      "account": {
+        "username": "62287315189565",
+        "password": "Password123!",
+        "email": "user9141@xcode.email",
+        "device": "MEmu3",
+        "timestamp": "2025-07-29T22:50:21.608221"
+      },
+      "instance": "MEmu4",
+      "success": false,
+      "timestamp": "2025-07-29T23:18:19.873449"
+    },
+    {
+      "account": {
+        "username": "54608114259812",
+        "password": "Password123!",
+        "email": "user7519@xcode.email",
+        "device": "MEmu4",
+        "timestamp": "2025-07-29T22:50:37.123170"
+      },
+      "instance": "MEmu4",
+      "success": true,
+      "timestamp": "2025-07-29T23:18:27.829158"
+    }
+  ]
+}
