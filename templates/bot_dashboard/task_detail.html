@@ -220,6 +220,11 @@ function startTask(taskId) {
 
 function stopTask(taskId) {
     if (confirm('Are you sure you want to stop this task?')) {
+        // Disable button to prevent double-clicking
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Stopping...';
+        
         $.post(`/tasks/${taskId}/stop/`, {
             'csrfmiddlewaretoken': '{{ csrf_token }}'
         })
@@ -228,10 +233,27 @@ function stopTask(taskId) {
                 location.reload();
             } else {
                 alert('Error: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-stop"></i> Stop Task';
             }
         })
-        .fail(function() {
-            alert('Failed to stop task. Please try again.');
+        .fail(function(xhr, status, error) {
+            let errorMessage = 'Failed to stop task. Please try again.';
+            
+            // Try to get more specific error message
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.status === 404) {
+                errorMessage = 'Task not found';
+            } else if (xhr.status === 403) {
+                errorMessage = 'Permission denied';
+            } else if (xhr.status === 500) {
+                errorMessage = 'Server error occurred';
+            }
+            
+            alert(errorMessage);
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-stop"></i> Stop Task';
         });
     }
 }

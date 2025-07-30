@@ -25,6 +25,7 @@ from .models import (
 )
 from .forms import LoginForm, BotSettingsForm, BotTaskForm
 from task_engine.tasks import start_bot_task, stop_bot_task
+from device_manager.models import DeviceSession
 
 
 def login_view(request):
@@ -254,23 +255,51 @@ def start_task(request, task_id):
 @login_required
 @require_POST
 def stop_task(request, task_id):
-    task = get_object_or_404(BotTask, id=task_id, created_by=request.user)
-    
-    if task.status == 'running':
-        stop_bot_task.delay(task.id)
-        task.status = 'stopped'
-        task.completed_at = timezone.now()
-        task.save()
+    try:
+        task = get_object_or_404(BotTask, id=task_id, created_by=request.user)
         
-        ActivityLog.objects.create(
-            task=task,
-            level='warning',
-            message='Task stopped by user'
-        )
-        
-        return JsonResponse({'status': 'success', 'message': 'Task stopped successfully'})
-    
-    return JsonResponse({'status': 'error', 'message': 'Task cannot be stopped'})
+        if task.status == 'running':
+            # First, update the task status immediately to prevent race conditions
+            task.status = 'stopped'
+            task.completed_at = timezone.now()
+            task.save()
+            
+            # Stop all device sessions immediately
+            sessions = DeviceSession.objects.filter(task=task, status='active')
+            for session in sessions:
+                session.status = 'stopped'
+                session.ended_at = timezone.now()
+                session.save()
+                
+                # Free up device
+                device = session.device
+                device.status = 'available'
+                device.save()
+            
+            # Log the stop action
+            ActivityLog.objects.create(
+                task=task,
+                level='warning',
+                message='Task stopped by user'
+            )
+            
+            # Try to stop the Celery task asynchronously
+            try:
+                stop_bot_task.delay(task.id)
+            except Exception as e:
+                # If Celery task fails, log it but don't fail the request
+                ActivityLog.objects.create(
+                    task=task,
+                    level='error',
+                    message=f'Failed to stop background task: {str(e)}'
+                )
+            
+            return JsonResponse({'status': 'success', 'message': 'Task stopped successfully'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Task cannot be stopped - not currently running'})
+            
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Error stopping task: {str(e)}'})
 
 
 @login_required

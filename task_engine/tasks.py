@@ -8,9 +8,19 @@ from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.keys import Keys
+import undetected_chromedriver as uc
 
 from bot_dashboard.models import BotTask, BotSettings, CreatedFacebookID, ActivityLog
 from device_manager.models import Device, DeviceSession
+from .facebook_automation import create_facebook_account_real
+from .email_generator import generate_temp_email
 
 
 @shared_task
@@ -106,7 +116,7 @@ def start_bot_task(task_id):
 
 @shared_task
 def create_facebook_id(session_id, task_id, domains):
-    """Create Facebook ID on a specific device"""
+    """Create Facebook ID on a specific device with verification"""
     try:
         session = DeviceSession.objects.get(id=session_id)
         task = BotTask.objects.get(id=task_id)
@@ -119,7 +129,7 @@ def create_facebook_id(session_id, task_id, domains):
             device_name=device.name
         )
         
-        # Generate email using TempMail API
+        # Generate email using real email services
         email = generate_temp_email()
         if not email:
             ActivityLog.objects.create(
@@ -148,38 +158,17 @@ def create_facebook_id(session_id, task_id, domains):
             device_name=device.name
         )
         
-        # Simulate Facebook account creation process
-        success = simulate_facebook_creation(device, email, password, domain)
+        # Step 1: Create Facebook account
+        ActivityLog.objects.create(
+            task=task,
+            level='info',
+            message=f'Creating Facebook account with email: {email}',
+            device_name=device.name
+        )
         
-        if success:
-            # Create Facebook ID record
-            CreatedFacebookID.objects.create(
-                task=task,
-                email=email,
-                password=password,
-                domain=domain,
-                device_name=device.name,
-                status='created'
-            )
-            
-            session.created_ids_count += 1
-            session.save()
-            
-            task.created_ids_count += 1
-            task.progress = min(100, int((task.created_ids_count / task.total_ids_to_create) * 100))
-            task.save()
-            
-            ActivityLog.objects.create(
-                task=task,
-                level='success',
-                message=f'Successfully created Facebook ID: {email}',
-                device_name=device.name
-            )
-            
-            # Send WebSocket update
-            send_task_update(task_id, 'running', task.progress, task.created_ids_count, task.failed_count)
-            
-        else:
+        account_created = simulate_facebook_creation(device, email, password, domain)
+        
+        if not account_created:
             session.failed_count += 1
             session.save()
             
@@ -189,9 +178,80 @@ def create_facebook_id(session_id, task_id, domains):
             ActivityLog.objects.create(
                 task=task,
                 level='error',
-                message=f'Failed to create Facebook ID: {email}',
+                message=f'Failed to create Facebook account: {email}',
                 device_name=device.name
             )
+            return
+        
+        ActivityLog.objects.create(
+            task=task,
+            level='success',
+            message=f'Facebook account created successfully: {email}',
+            device_name=device.name
+        )
+        
+        # Step 2: Verify account (optional but recommended)
+        try:
+            from .verification_handler import verify_facebook_account
+            
+            ActivityLog.objects.create(
+                task=task,
+                level='info',
+                message=f'Starting account verification for: {email}',
+                device_name=device.name
+            )
+            
+            verification_success = verify_facebook_account(email, password, headless=True)
+            
+            if verification_success:
+                ActivityLog.objects.create(
+                    task=task,
+                    level='success',
+                    message=f'Account verification completed: {email}',
+                    device_name=device.name
+                )
+            else:
+                ActivityLog.objects.create(
+                    task=task,
+                    level='warning',
+                    message=f'Account verification failed, but account may still be usable: {email}',
+                    device_name=device.name
+                )
+                
+        except Exception as e:
+            ActivityLog.objects.create(
+                task=task,
+                level='warning',
+                message=f'Verification process error: {str(e)}',
+                device_name=device.name
+            )
+        
+        # Create Facebook ID record
+        CreatedFacebookID.objects.create(
+            task=task,
+            email=email,
+            password=password,
+            domain=domain,
+            device_name=device.name,
+            status='created'
+        )
+        
+        session.created_ids_count += 1
+        session.save()
+        
+        task.created_ids_count += 1
+        task.progress = min(100, int((task.created_ids_count / task.total_ids_to_create) * 100))
+        task.save()
+        
+        ActivityLog.objects.create(
+            task=task,
+            level='success',
+            message=f'Successfully created and verified Facebook ID: {email}',
+            device_name=device.name
+        )
+        
+        # Send WebSocket update
+        send_task_update(task_id, 'running', task.progress, task.created_ids_count, task.failed_count)
         
         # Check if task is complete
         if task.created_ids_count + task.failed_count >= task.total_ids_to_create:
@@ -223,36 +283,69 @@ def stop_bot_task(task_id):
     """Stop Facebook ID creation task"""
     try:
         task = BotTask.objects.get(id=task_id)
+        
+        # Check if task is already stopped
+        if task.status == 'stopped':
+            print(f"Task {task_id} is already stopped")
+            return
+        
+        # Update task status
         task.status = 'stopped'
         task.completed_at = timezone.now()
         task.save()
         
         # Stop all device sessions
-        sessions = DeviceSession.objects.filter(task=task, status='active')
-        for session in sessions:
-            session.status = 'stopped'
-            session.ended_at = timezone.now()
-            session.save()
-            
-            # Free up device
-            device = session.device
-            device.status = 'available'
-            device.save()
+        try:
+            sessions = DeviceSession.objects.filter(task=task, status='active')
+            for session in sessions:
+                session.status = 'stopped'
+                session.ended_at = timezone.now()
+                session.save()
+                
+                # Free up device
+                try:
+                    device = session.device
+                    device.status = 'available'
+                    device.save()
+                except Exception as device_error:
+                    print(f"Error freeing device {session.device.id}: {device_error}")
+        except Exception as session_error:
+            print(f"Error stopping device sessions for task {task_id}: {session_error}")
         
-        ActivityLog.objects.create(
-            task=task,
-            level='warning',
-            message='Task stopped by user',
-            device_name='System'
-        )
+        # Create activity log
+        try:
+            ActivityLog.objects.create(
+                task=task,
+                level='warning',
+                message='Task stopped by user',
+                device_name='System'
+            )
+        except Exception as log_error:
+            print(f"Error creating activity log for task {task_id}: {log_error}")
         
         # Send WebSocket update
-        send_task_update(task_id, 'stopped', task.progress, task.created_ids_count, task.failed_count)
+        try:
+            send_task_update(task_id, 'stopped', task.progress, task.created_ids_count, task.failed_count)
+        except Exception as ws_error:
+            print(f"Error sending WebSocket update for task {task_id}: {ws_error}")
+        
+        print(f"Task {task_id} stopped successfully")
         
     except BotTask.DoesNotExist:
         print(f"Task {task_id} not found")
     except Exception as e:
         print(f"Error stopping task {task_id}: {e}")
+        # Try to log the error
+        try:
+            task = BotTask.objects.get(id=task_id)
+            ActivityLog.objects.create(
+                task=task,
+                level='error',
+                message=f'Error in stop_bot_task: {str(e)}',
+                device_name='System'
+            )
+        except:
+            pass
 
 
 def complete_task(task_id):
@@ -290,16 +383,9 @@ def complete_task(task_id):
 
 
 def generate_temp_email():
-    """Generate temporary email using TempMail API"""
-    try:
-        # This is a placeholder - you would integrate with actual TempMail API
-        # For now, we'll generate a random email
-        username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
-        domain = random.choice(['tempmail.org', 'temp-mail.org', '10minutemail.com'])
-        return f"{username}@{domain}"
-    except Exception as e:
-        print(f"Error generating temp email: {e}")
-        return None
+    """Generate temporary email using real email services"""
+    from .email_generator import generate_temp_email as real_generate_temp_email
+    return real_generate_temp_email()
 
 
 def generate_password():
@@ -309,19 +395,14 @@ def generate_password():
 
 
 def simulate_facebook_creation(device, email, password, domain):
-    """Simulate Facebook account creation process"""
+    """Real Facebook account creation using Selenium automation"""
     try:
-        # This is a placeholder for the actual Facebook automation
-        # In a real implementation, you would use Selenium or similar
-        
-        # Simulate some processing time
-        time.sleep(random.uniform(2, 5))
-        
-        # Simulate success/failure (90% success rate for demo)
-        return random.random() < 0.9
+        # Use the new Facebook automation module
+        success = create_facebook_account_real(email, password, headless=True)
+        return success
         
     except Exception as e:
-        print(f"Error in Facebook creation simulation: {e}")
+        print(f"Error in Facebook account creation: {e}")
         return False
 
 

@@ -3,6 +3,9 @@
 {% block title %}Dashboard - Facebook ID Creator Bot{% endblock %}
 
 {% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
@@ -265,6 +268,11 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    // Get CSRF token
+    function getCSRFToken() {
+        return $('[name=csrfmiddlewaretoken]').val() || $('meta[name=csrf-token]').attr('content');
+    }
+    
     // Start task
     $('.start-task').click(function() {
         const taskId = $(this).data('task-id');
@@ -274,7 +282,7 @@ $(document).ready(function() {
             url: `/tasks/${taskId}/start/`,
             method: 'POST',
             headers: {
-                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                'X-CSRFToken': getCSRFToken()
             },
             success: function(response) {
                 if (response.status === 'success') {
@@ -283,8 +291,20 @@ $(document).ready(function() {
                     alert('Error: ' + response.message);
                 }
             },
-            error: function() {
-                alert('Error starting task');
+            error: function(xhr, status, error) {
+                let errorMessage = 'Error starting task';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Permission denied. Please refresh the page and try again.';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Task not found';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Server error occurred';
+                }
+                
+                alert(errorMessage);
             }
         });
     });
@@ -295,21 +315,39 @@ $(document).ready(function() {
         const button = $(this);
         
         if (confirm('Are you sure you want to stop this task?')) {
+            // Disable button to prevent double-clicking
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Stopping...');
+            
             $.ajax({
                 url: `/tasks/${taskId}/stop/`,
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                    'X-CSRFToken': getCSRFToken()
                 },
                 success: function(response) {
                     if (response.status === 'success') {
                         location.reload();
                     } else {
                         alert('Error: ' + response.message);
+                        button.prop('disabled', false).html('<i class="fas fa-stop"></i> Stop');
                     }
                 },
-                error: function() {
-                    alert('Error stopping task');
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Error stopping task';
+                    
+                    // Try to get more specific error message
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'Permission denied. Please refresh the page and try again.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Task not found';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error occurred';
+                    }
+                    
+                    alert(errorMessage);
+                    button.prop('disabled', false).html('<i class="fas fa-stop"></i> Stop');
                 }
             });
         }
