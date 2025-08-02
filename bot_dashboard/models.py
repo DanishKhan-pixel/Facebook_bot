@@ -68,6 +68,13 @@ class BotTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     task_id = models.CharField(max_length=255, blank=True)  # Celery task ID
+    
+    # Additional fields that exist in the database
+    average_creation_time = models.FloatField(default=0.0)
+    last_rate_limit_reset = models.DateTimeField(null=True, blank=True)
+    rate_limit_hits = models.IntegerField(default=0)
+    success_rate = models.FloatField(default=0.0)
+    current_proxy_id = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} - {self.status}"
